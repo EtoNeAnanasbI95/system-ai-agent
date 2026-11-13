@@ -200,7 +200,10 @@ local function render()
   end
   model.dirty = false
   lastRenderMs = now()
+  uiState.clock = lastRenderMs
+  uiState.spinning = false -- set again by every spinner the render draws
   panel.render(Render.panel(model, uiState, settings(), actions))
+  if uiState.spinning then setFrameTick(true) end
 end
 
 -- Streaming updates are coalesced: the frame tick renders at most every 100 ms.
@@ -583,7 +586,8 @@ function actions.refreshCommands(onDone)
   end)
 end
 
-function actions.loadChats(offset)
+-- index: the chat to highlight once the page arrives (keyboard paging), 1 by default.
+function actions.loadChats(offset, index)
   if client == nil then return end
   catalogGen += 1
   local gen, c, query = catalogGen, client, uiState.query
@@ -597,6 +601,7 @@ function actions.loadChats(offset)
       uiState.sessions = body.sessions
       uiState.sessionsOffset = tonumber(body.offset) or 0
       uiState.sessionsTotal = tonumber(body.total) or #body.sessions
+      uiState.chatIndex = math.max(1, math.min(index or 1, #uiState.sessions))
     else
       uiState.sessions = {}
       uiState.sessionsTotal = 0
@@ -788,6 +793,31 @@ local function acceptSuggestion()
     if entry ~= nil then actions.choosePath(entry) return true end
   end
   return false
+end
+
+-- Chat picker: the suggestion keys walk the chats, 30 per page; leaving a page loads the next.
+local CHATS_PAGE = 30
+
+local function moveChat(step)
+  if uiState.sessionsLoading or #uiState.sessions == 0 then return end
+  local total = math.max(tonumber(uiState.sessionsTotal) or 0, uiState.sessionsOffset + #uiState.sessions)
+  local target = (uiState.sessionsOffset + (uiState.chatIndex or 1) - 1 + step) % total
+  local offset = target - target % CHATS_PAGE
+  if offset == uiState.sessionsOffset then
+    uiState.chatIndex = target - offset + 1
+    render()
+  else
+    actions.loadChats(offset, target - offset + 1)
+  end
+end
+
+function actions.openHighlightedChat()
+  local entry = not uiState.sessionsLoading and uiState.sessions[uiState.chatIndex or 1] or nil
+  if entry ~= nil then actions.selectChat(entry, false) end
+end
+
+function actions.toggleChats()
+  if uiState.picker then actions.closeChats() else actions.chats() end
 end
 
 local function enterAccepts()
@@ -1071,18 +1101,28 @@ function actions.paste()
 end
 
 local PASTE_CHORDS = { ["ctrl+v"] = true, ["ctrl+Cyrillic_em"] = true }
+local CHATS_CHORDS = { ["ctrl+r"] = true, ["ctrl+Cyrillic_ka"] = true } -- Ctrl+R on a Russian layout too
 
 function onKey(chord, pressed)
   if not pressed or not isOpen then return end
   if PASTE_CHORDS[chord] then
     actions.paste()
+  elseif CHATS_CHORDS[chord] then
+    actions.toggleChats()
   elseif chord == "alt+v" and not uiState.picker then
     actions.pasteImage()
   else
     local keys = suggestionKeys()
     for _, action in ipairs(SUGGESTION_ORDER) do
       if SUGGESTION_CHORDS[keys[action]] == chord then
-        if action == "accept" then acceptSuggestion() else moveSuggestion(action == "next" and 1 or -1) end
+        local step = action == "next" and 1 or -1
+        if uiState.picker then
+          if action == "accept" then actions.openHighlightedChat() else moveChat(step) end
+        elseif action == "accept" then
+          acceptSuggestion()
+        else
+          moveSuggestion(step)
+        end
         return
       end
     end
@@ -1114,7 +1154,9 @@ function onFrameTick(_deltaMs)
     actions.refreshCommands(nil)
   end
   if not model.dirty then
-    setFrameTick(pathAt ~= nil or queryAt ~= nil or uiState.discoverAt ~= nil)
+    -- A spinner on screen advances one frame per render interval.
+    if uiState.spinning and now() - lastRenderMs >= RENDER_INTERVAL_MS then render() end
+    setFrameTick(uiState.spinning or pathAt ~= nil or queryAt ~= nil or uiState.discoverAt ~= nil)
     return
   end
   if now() - lastRenderMs >= RENDER_INTERVAL_MS then

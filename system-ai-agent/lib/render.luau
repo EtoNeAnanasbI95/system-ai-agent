@@ -48,6 +48,21 @@ local TOOL_STATUS = {
   stopped = { glyph = "player-stop", color = "on_surface_variant" },
 }
 
+-- A text spinner, one frame per 100 ms. Glyphs cannot rotate before plugin API 52, so the panel
+-- re-renders while a spinner is on screen: drawing one sets state.spinning, and state.clock picks
+-- the frame.
+local SPINNER = { "⠋", "⠙", "⠹", "⠸", "⠼", "⠴", "⠦", "⠧", "⠇", "⠏" }
+local SPINNER_MS = 100
+
+local function spinnerText(state)
+  state.spinning = true
+  return SPINNER[math.floor((state.clock or 0) / SPINNER_MS) % #SPINNER + 1]
+end
+
+local function spinner(key, state, size, color)
+  return ui.label({ key = key, text = spinnerText(state), fontSize = size, color = color or "primary" })
+end
+
 local RESOLVED = {
   allow_once = { glyph = "circle-check", color = "primary" },
   allow_session = { glyph = "shield-check", color = "primary" },
@@ -338,7 +353,11 @@ toolItem = function(item, ui_state, actions)
   if #item.children > 0 then
     trailing[#trailing + 1] = muted(item.id .. "-count", tr("panel.tool.steps", { n = #item.children }), 11)
   end
-  trailing[#trailing + 1] = ui.glyph({ key = item.id .. "-status", name = status.glyph, size = 14, color = status.color })
+  if item.status == "running" and not item.historical then
+    trailing[#trailing + 1] = spinner(item.id .. "-spin", ui_state, 13, "on_surface_variant")
+  else
+    trailing[#trailing + 1] = ui.glyph({ key = item.id .. "-status", name = status.glyph, size = 14, color = status.color })
+  end
   local children = {
     disclosureRow(item.id, open, toolGlyph(item.name), item.name, item.summary, trailing, function()
       actions.toggle(item.id)
@@ -619,11 +638,12 @@ local function header(m, ui_state, actions)
     ui.button({
       key = "header-chats",
       text = tr("panel.chats"),
+      tooltip = tr("panel.chats_shortcut"),
       glyph = "messages",
       variant = "ghost",
       controlSize = "sm",
       enabled = ui_state.hasBridge and ui_state.connected,
-      onClick = actions.chats,
+      onClick = actions.toggleChats,
     }),
     ui.button({
       key = "header-new",
@@ -660,9 +680,9 @@ local function emptyState(settings)
   })
 end
 
-local function workingRow()
+local function workingRow(ui_state)
   return ui.row({ key = "working", gap = 8, align = "center", paddingH = 8 }, {
-    ui.glyph({ key = "working-glyph", name = "loader-2", size = 14, color = "primary" }),
+    spinner("working-spinner", ui_state, 14),
     ui.label({ key = "working-text", text = tr("widget.state.running"), fontSize = 12, color = "on_surface_variant" }),
   })
 end
@@ -699,7 +719,7 @@ local function feed(m, ui_state, settings, actions)
   local last = display.items[#display.items]
   local busy = ui_state.historyPage == nil and (ui_state.status == "running" or m.state == "running")
   if busy and ui_state.status ~= "waiting_permission" and not (last ~= nil and last.kind == "assistant" and last.streaming) then
-    rows[#rows + 1] = workingRow()
+    rows[#rows + 1] = workingRow(ui_state)
   end
   return ui.scroll({
     key = ui_state.historyPage ~= nil and ("history-feed-" .. tostring(ui_state.historyOffset)) or "feed",
@@ -821,7 +841,33 @@ local function composer(m, ui_state, settings, actions)
   })
 end
 
-local function picker(m, state, actions)
+local keyNames = { tab = "Tab", shift_tab = "Shift+Tab", up = "↑", down = "↓", enter = "Enter" }
+
+-- "↓/↑ to move · Tab to pick", from the user's suggestion key settings.
+local function withKeyHint(children, key, settings)
+  local keys = settings and settings.suggestion_keys
+  if keys == nil then return children end
+  table.insert(children, 2, muted(key, tr("panel.suggestion_keys", { next = keyNames[keys.next] or "", previous = keyNames[keys.previous] or "",
+    accept = keyNames[keys.accept] or "" }), 10))
+  return children
+end
+
+-- The highlighted suggestion: the one the accept key picks.
+-- Always sets the border: the host keeps a prop that disappears from a node, so a row that
+-- lost the highlight would stay outlined. Unselected rows get a border in their own fill.
+local function highlight(props, selected)
+  props.border = selected and "primary" or props.fill
+  props.borderWidth = 1
+  return props
+end
+
+-- "Tab/Shift+Tab move · Enter open · Ctrl+R close" for the chat picker.
+local function chatKeyHint(settings)
+  local keys = settings and settings.suggestion_keys or {}
+  return tr("panel.chat_keys", { next = keyNames[keys.next] or "↓", previous = keyNames[keys.previous] or "↑" })
+end
+
+local function picker(m, state, actions, settings)
   local blocked = isBusy(m, state) or not state.connected or state.sessionsLoading
   local rows = {}
   -- Browsing chats must not hide approvals for the currently running turn.
@@ -830,28 +876,36 @@ local function picker(m, state, actions)
       rows[#rows + 1] = permissionItem(item, state, actions)
     end
   end
-  for _, session in ipairs(state.sessions) do
+  for index, session in ipairs(state.sessions) do
     local entry = session
-    rows[#rows + 1] = ui.column({
+    rows[#rows + 1] = ui.column(highlight({
       key = "chat-" .. entry.id, gap = 4, padding = 10, radius = 10,
       fill = entry.selected == true and "surface_container_high" or "surface_container", onClick = function()
         if not blocked then actions.selectChat(entry, false) end
       end,
-    }, {
+    }, index == (state.chatIndex or 1) and not state.sessionsLoading), {
       ui.label({ key = "chat-title-" .. entry.id, text = (entry.selected == true and (tr("panel.current_chat") .. " · ") or "") .. (entry.title or tr("panel.untitled")), fontSize = 13, fontWeight = "medium", color = blocked and "on_surface_variant" or "on_surface", maxLines = 2 }),
       muted("chat-cwd-" .. entry.id, shortPath(entry.cwd), 11),
       muted("chat-time-" .. entry.id, tostring(entry.updated_at or "") .. (entry.active and (" · " .. tr("panel.active_elsewhere")) or ""), 10),
     })
   end
-  if #rows == 0 then rows[1] = muted("chats-empty", tr(state.sessionsLoading and "panel.loading" or "panel.no_chats"), 12) end
+  if #rows == 0 and state.sessionsLoading then
+    rows[1] = ui.row({ key = "chats-loading", gap = 8, align = "center" }, {
+      spinner("chats-loading-spinner", state, 13), muted("chats-loading-text", tr("panel.loading"), 12),
+    })
+  elseif #rows == 0 then
+    rows[1] = muted("chats-empty", tr("panel.no_chats"), 12)
+  end
   local children = {
     ui.row({ key = "chats-heading", gap = 8, align = "center" }, {
       ui.label({ key = "chats-title", text = tr("panel.chats"), fontSize = 16, fontWeight = "bold", flexGrow = 1 }),
+      ui.label({ key = "chats-busy-spinner", text = state.sessionsLoading and spinnerText(state) or "", fontSize = 14, color = "primary" }),
       ui.button({ key = "chats-refresh", glyph = "refresh", tooltip = tr("panel.refresh"), variant = "ghost", onClick = function() actions.loadChats(0) end }),
       ui.button({ key = "chats-close", glyph = "x", tooltip = tr("panel.close"), variant = "ghost", onClick = actions.closeChats }),
     }),
-    ui.input({ key = "chats-search-" .. tostring(state.pickerGen or 0), value = state.query, placeholder = tr("panel.search_chats"), focus = true, onChange = actions.searchChats }),
-    muted("chats-order", tr("panel.newest_first"), 10),
+    ui.input({ key = "chats-search-" .. tostring(state.pickerGen or 0), value = state.query, placeholder = tr("panel.search_chats"), focus = true, onChange = actions.searchChats,
+      onSubmit = function() if not blocked then actions.openHighlightedChat() end end }),
+    muted("chats-order", tr("panel.newest_first") .. " · " .. chatKeyHint(settings), 10),
   }
   if isBusy(m, state) then
     children[#children + 1] = ui.row({ key = "chats-running", gap = 8, align = "center" }, {
@@ -865,7 +919,9 @@ local function picker(m, state, actions)
     children[#children + 1] = banner("chats-warning", "alert-triangle", tr("panel.session_active_elsewhere"), "info")
     children[#children + 1] = ui.button({ key = "chats-continue", text = tr("panel.continue_chat"), variant = "outline", enabled = not blocked, onClick = function() actions.selectChat(selected, true) end })
   end
-  children[#children + 1] = ui.scroll({ key = "chats-list", flexGrow = 1, gap = 6 }, rows)
+  local highlighted = state.sessions[state.chatIndex or 1]
+  children[#children + 1] = ui.scroll({ key = "chats-list", flexGrow = 1, gap = 6,
+    revealKey = highlighted ~= nil and ("chat-" .. highlighted.id) or nil }, rows)
   children[#children + 1] = ui.row({ key = "chats-pages", gap = 8, align = "center" }, {
     ui.button({ key = "chats-prev", text = tr("panel.previous"), variant = "ghost", enabled = not state.sessionsLoading and state.sessionsOffset > 0, onClick = function() actions.loadChats(math.max(0, state.sessionsOffset - 30)) end }),
     muted("chats-count", tr("panel.chat_count", { n = state.sessionsTotal }), 11),
@@ -931,26 +987,6 @@ local function preferenceMenu(m, state, actions)
   return ui.column({ key = "preferences-menu", gap = 4, flexGrow = 1 }, rows)
 end
 
-local keyNames = { tab = "Tab", shift_tab = "Shift+Tab", up = "↑", down = "↓", enter = "Enter" }
-
--- "↓/↑ to move · Tab to pick", from the user's suggestion key settings.
-local function withKeyHint(children, key, settings)
-  local keys = settings and settings.suggestion_keys
-  if keys == nil then return children end
-  table.insert(children, 2, muted(key, tr("panel.suggestion_keys", { next = keyNames[keys.next] or "", previous = keyNames[keys.previous] or "",
-    accept = keyNames[keys.accept] or "" }), 10))
-  return children
-end
-
--- The highlighted suggestion: the one the accept key picks.
-local function highlight(props, selected)
-  if selected then
-    props.border = "primary"
-    props.borderWidth = 1
-  end
-  return props
-end
-
 local function suggestions(state, actions, settings)
   local rows = {
     ui.row({ key = "commands-heading", align = "center", gap = 6 }, withKeyHint({
@@ -994,7 +1030,9 @@ local function fileControls(state, actions, settings)
       rows[#rows + 1] = ui.label({ key = "paths-directory", text = compact(state.pathsDirectory, 65), maxLines = 1, fontSize = 10, color = "on_surface_variant" })
     end
     if state.pathsLoading or #state.paths == 0 then
-      rows[#rows + 1] = muted("paths-empty", tr(state.pathsLoading and "panel.loading" or "panel.no_files"), 11)
+      rows[#rows + 1] = state.pathsLoading and ui.row({ key = "paths-loading", gap = 6, align = "center" }, {
+        spinner("paths-loading-spinner", state, 12), muted("paths-loading-text", tr("panel.loading"), 11),
+      }) or muted("paths-empty", tr("panel.no_files"), 11)
     end
     for index = 1, math.min(4, #state.paths) do
       local entry = state.paths[index]
@@ -1031,12 +1069,12 @@ function M.panel(m, ui_state, settings, actions)
     ui.separator({ key = "header-sep", color = "outline_variant" }),
   }
   if ui_state.picker then
-    children[#children + 1] = picker(m, ui_state, actions)
+    children[#children + 1] = picker(m, ui_state, actions, settings)
   elseif ui_state.controlsMenu ~= nil and not isBusy(m, ui_state) then
     children[#children + 1] = preferenceMenu(m, ui_state, actions)
   else
     local controls = {
-      ui.button({ key = "history-older", text = tr(ui_state.historyLoading and "panel.loading" or "panel.older_history"), variant = "ghost", controlSize = "sm", enabled = ui_state.connected and not ui_state.historyLoading and not ui_state.switching and (ui_state.historyPage ~= nil and ui_state.historyOffset > 0 or ui_state.historyPage == nil and (ui_state.historyStart == nil or ui_state.historyStart > 0 or m.evicted == true)), onClick = function()
+      ui.button({ key = "history-older", text = ui_state.historyLoading and (spinnerText(ui_state) .. " " .. tr("panel.loading")) or tr("panel.older_history"), variant = "ghost", controlSize = "sm", enabled = ui_state.connected and not ui_state.historyLoading and not ui_state.switching and (ui_state.historyPage ~= nil and ui_state.historyOffset > 0 or ui_state.historyPage == nil and (ui_state.historyStart == nil or ui_state.historyStart > 0 or m.evicted == true)), onClick = function()
         local offset = ui_state.historyPage ~= nil and ui_state.historyOffset or ui_state.historyStart
         if ui_state.historyPage == nil and m.evicted then offset = nil end
         actions.history(offset ~= nil and math.max(0, offset - 100) or nil)

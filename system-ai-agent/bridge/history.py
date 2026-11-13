@@ -118,7 +118,11 @@ class SessionCatalog:
             messages = [r for r in records if r.get('type') in ('user', 'assistant')]
         first = next((_visible_text(r) for r in messages if r.get('type') == 'user'
                       and _visible_text(r)), '')
-        cwd = next((r['cwd'] for r in reversed(messages) if isinstance(r.get('cwd'), str)), '')
+        # The folder the chat started in, not the last one: every record carries the shell's folder,
+        # which a `cd` changes, while Claude Code keeps the transcript under the starting folder's
+        # project and resumes it from there. The whole file, not the branch: after compaction the
+        # branch starts mid-chat.
+        cwd = next((r['cwd'] for r in records if isinstance(r.get('cwd'), str)), '')
         title = next((r.get('customTitle') for r in reversed(records)
                       if r.get('type') == 'custom-title' and r.get('customTitle')), None)
         title = title or next((r.get('aiTitle') or r.get('summary') for r in reversed(records)
