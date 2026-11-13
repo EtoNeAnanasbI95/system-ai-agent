@@ -1,0 +1,265 @@
+{
+  "error": {
+    "not_responding": "The bridge is not responding, restarting…",
+    "python_missing": "Python not found: {python}",
+    "start_failed": "Could not start the bridge process"
+  },
+  "notify": {
+    "error": {
+      "body": "Open System AI Agent to see the error.",
+      "title": "Claude could not finish"
+    },
+    "permission": {
+      "body": "Open the System AI Agent panel to answer.",
+      "title": "Claude is waiting for approval"
+    },
+    "success": {
+      "body": "Open System AI Agent to see the result.",
+      "title": "Claude finished"
+    }
+  },
+  "panel": {
+    "active_elsewhere": "Active elsewhere",
+    "attach_file": "Attach file",
+    "chat_count": "{n} chats",
+    "chats": "Chats",
+    "clear_chat": "Start a new chat; keep this conversation in history",
+    "clipboard_empty": "The clipboard is empty",
+    "clipboard_unavailable": "Cannot read the clipboard (is wl-paste installed?)",
+    "close": "Close",
+    "code": "code",
+    "commands": "Commands",
+    "commands_unavailable": "Commands are not ready. Your draft is preserved; try again shortly.",
+    "continue_chat": "Continue here",
+    "control": {
+      "access": "Access",
+      "effort": "Effort",
+      "model": "Model"
+    },
+    "copied": "Copied",
+    "copy": "Copy answer",
+    "copy_answer": "Copy answer",
+    "copy_code": "Copy",
+    "current_chat": "Current chat",
+    "decide_failed": "Could not send your answer. Try again.",
+    "empty": {
+      "hint": "Claude Code starts in {cwd}. Choose model, effort and access below.",
+      "title": "Ask Claude anything"
+    },
+    "error": {
+      "auth": "Claude Code is not signed in. Run `claude /login` in a terminal.",
+      "crash": "Claude stopped unexpectedly. Send a message to continue."
+    },
+    "file_path": "File path (relative, ~/ or absolute)",
+    "files": "Files",
+    "fork_here": "Branch from here: continue a copy of the chat up to this answer",
+    "forked": "New branch: your next message continues a copy of the chat up to here. The original stays in Chats.",
+    "hint": {
+      "ctrl_enter": "Ctrl+Enter to send",
+      "enter": "Enter to send · Shift+Enter for a new line"
+    },
+    "history_position": "Events from {n} of {total}",
+    "image_not_found": "The pasted image is gone; paste it again",
+    "image_too_large": "The image is too large (install ImageMagick to shrink it automatically)",
+    "images_count": "Images: {n}",
+    "invalid_attachments": "Choose up to 10 valid file attachments",
+    "invalid_image": "The clipboard does not hold a PNG, JPEG, WebP or GIF image",
+    "invalid_images": "Invalid images",
+    "invalid_path": "Choose an existing regular file",
+    "invalid_session": "This chat cannot be selected. Refresh the list.",
+    "latest": "Live conversation",
+    "loading": "Loading…",
+    "message_not_found": "This message is no longer in the chat history",
+    "missing_cwd": "The working folder no longer exists. Choose another chat.",
+    "new_chat": "New chat",
+    "newest_first": "Newest first · working folder shown below each title",
+    "next": "Next",
+    "no_chats": "No matching chats",
+    "no_files": "No matching files",
+    "no_image": "No image in the clipboard",
+    "not_connected": "Not connected to Claude yet. Your message is still in the box, send it again in a moment.",
+    "nothing_to_fork": "Nothing to branch yet: send a message first",
+    "older_history": "Older history",
+    "parent_directory": "Parent",
+    "paste_image": "Paste image from clipboard (Ctrl+V)",
+    "paste_too_long": "The clipboard text is too long for a message",
+    "path_not_found": "File not found",
+    "paths_truncated": "Search limited; refine the path",
+    "perm": {
+      "allow": "Allow",
+      "blocked_path": "Path: {path}",
+      "deny": "Deny",
+      "more_lines": "… {n} more lines",
+      "resolved": {
+        "allow_once": "Allowed once",
+        "allow_session": "Allowed for this session",
+        "cancelled": "Cancelled",
+        "deny": "Denied"
+      },
+      "session": "Allow for this session",
+      "session_rule": "In this session allow:",
+      "title": "{tool} needs your approval",
+      "truncated": "The request is shortened here, the full input is too long to show"
+    },
+    "placeholder": "Message Claude…",
+    "preference": {
+      "auto_short": "Auto",
+      "edits_short": "Edits",
+      "effort": {
+        "default": "Default",
+        "high": "High",
+        "low": "Low",
+        "max": "Maximum",
+        "medium": "Medium",
+        "xhigh": "Extra high"
+      },
+      "model": {
+        "default": "Default",
+        "fable": "Fable",
+        "haiku": "Haiku",
+        "opus": "Opus",
+        "sonnet": "Sonnet"
+      },
+      "permission_mode": {
+        "accept_edits": "Accept edits",
+        "bypass_permissions": "Bypass",
+        "default": "Ask",
+        "plan": "Plan"
+      }
+    },
+    "previous": "Previous",
+    "reconnecting": "Reconnecting…",
+    "references": "File references",
+    "refresh": "Refresh",
+    "remove_attachment": "Remove attachment",
+    "remove_image": "Remove image",
+    "request_failed": "The request failed. Your draft is preserved. Try again.",
+    "result": {
+      "failed": "Failed: {error}",
+      "seconds": "{s} s",
+      "stopped": "Stopped"
+    },
+    "search_chats": "Search chats…",
+    "send": "Send",
+    "send_failed": "Could not send the message.",
+    "session_active_elsewhere": "This chat appears active in another application. Overlapping turns may conflict. Select it in Chats and choose Continue here to proceed.",
+    "session_busy": "Stop the current turn before starting or switching chats.",
+    "session_not_found": "This chat is no longer available. Refresh the list.",
+    "settings": "Settings",
+    "stop": "Stop",
+    "suggestion_keys": "{next}/{previous} move · {accept} pick",
+    "thinking": "Thinking",
+    "title": "Claude",
+    "too_long": "The message is too long: at most 100 000 characters.",
+    "too_many_attachments": "Attach up to 10 files",
+    "too_many_images": "Up to 5 images per message",
+    "tool": {
+      "empty": "(empty)",
+      "input": "Input",
+      "no_output": "No output yet",
+      "output": "Output",
+      "steps": "{n} steps",
+      "truncated": "Shortened, the full text is too long to show"
+    },
+    "unknown_command": "Unknown or unavailable slash command. Choose a suggestion.",
+    "untitled": "Untitled chat"
+  },
+  "settings": {
+    "claude_path": {
+      "description": "Full path to the claude executable. Leave empty to find it in PATH.",
+      "label": "Claude binary path"
+    },
+    "default_cwd": {
+      "description": "Folder where Claude starts a new chat.",
+      "label": "Working folder"
+    },
+    "effort": {
+      "description": "How much reasoning effort Claude uses. Default uses the model setting.",
+      "label": "Effort",
+      "options": {
+        "default": "Default",
+        "high": "High",
+        "low": "Low",
+        "max": "Maximum",
+        "medium": "Medium",
+        "xhigh": "Extra high"
+      }
+    },
+    "extra_prompt": {
+      "description": "Text added to the system prompt of every chat.",
+      "label": "Extra instructions"
+    },
+    "load_user_config": {
+      "description": "Use your own CLAUDE.md, settings and MCP servers from ~/.claude.",
+      "label": "Load my Claude config"
+    },
+    "model": {
+      "description": "Which Claude model answers. Default uses your Claude Code setting.",
+      "label": "Model",
+      "options": {
+        "default": "Default",
+        "fable": "Fable",
+        "haiku": "Haiku",
+        "opus": "Opus",
+        "sonnet": "Sonnet"
+      }
+    },
+    "notify_on_completion": {
+      "description": "Show a notification when Claude finishes or reports an error while the panel is closed.",
+      "label": "Notify when finished"
+    },
+    "notify_on_permission": {
+      "description": "Show a notification when Claude waits for your approval while the panel is closed.",
+      "label": "Notify on permission requests"
+    },
+    "permission_mode": {
+      "description": "Default: Bypass runs tools without approval. Ask requests approval; Accept edits allows file edits; Plan is read-only.",
+      "label": "Permission mode",
+      "options": {
+        "accept_edits": "Accept file edits",
+        "bypass_permissions": "Bypass",
+        "default": "Ask before changes",
+        "plan": "Plan"
+      }
+    },
+    "python_path": {
+      "description": "Full path to python3 for the bridge. Leave empty to use PATH.",
+      "label": "Python path"
+    },
+    "send_on_enter": {
+      "description": "Enter sends the message and Shift+Enter adds a new line. Off: Ctrl+Enter sends.",
+      "label": "Send on Enter"
+    },
+    "suggestion_accept": {
+      "description": "Key that inserts the highlighted suggestion. Enter picks only while suggestions are shown and sends or adds a line otherwise. If one key is chosen twice, picking wins over moving.",
+      "label": "Pick suggestion"
+    },
+    "suggestion_key": {
+      "down": "Down arrow",
+      "enter": "Enter",
+      "shift_tab": "Shift+Tab",
+      "tab": "Tab",
+      "up": "Up arrow"
+    },
+    "suggestion_next": {
+      "description": "Key that moves the highlight down in the command and file suggestions.",
+      "label": "Next suggestion"
+    },
+    "suggestion_previous": {
+      "description": "Key that moves the highlight up in the command and file suggestions.",
+      "label": "Previous suggestion"
+    }
+  },
+  "widget": {
+    "chat": "Chat",
+    "no_chat": "No chat yet",
+    "state": {
+      "error": "Error",
+      "idle": "Ready",
+      "running": "Working…",
+      "starting": "Starting…",
+      "waiting_permission": "Waiting for your approval"
+    },
+    "state_label": "State"
+  }
+}

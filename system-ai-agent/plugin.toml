@@ -1,0 +1,180 @@
+id = "notkirilov/system-ai-agent"
+name = "System AI Agent"
+version = "0.1.0"
+plugin_api = 43
+author = "notkirilov"
+license = "MIT"
+icon = "sparkles"
+description = "Chat with Claude Code in a panel that slides in from the right."
+tags = ["ai", "panel", "bar", "development"]
+dependencies = ["claude", "python3"]
+
+[[service]]
+id = "service"
+entry = "service.luau"
+
+[[widget]]
+id = "agent"
+entry = "widget.luau"
+
+  [widget.actions]
+  middle = "none"
+
+[[panel]]
+id = "panel"
+entry = "panel.luau"
+placement = "floating"
+position = "center_right"
+width = 520
+height = "fill"
+keyboard_focus = "on_demand"
+dismiss_on_outside_click = false
+# Ctrl+V pastes the clipboard's image or text (the host input would paste stale text over a
+# screenshot); Ctrl+Shift+V stays the host's paste at the cursor. Cyrillic_em: Ctrl+V on a
+# Russian layout. Alt+V pastes an image only.
+# Tab, Shift+Tab, Up and Down: every key the suggestion_* settings can pick. The host captures a
+# fixed list, so these never reach the composer (Up/Down no longer move between its lines).
+capture_keys = ["ctrl+v", "ctrl+Cyrillic_em", "alt+v", "Tab", "shift+ISO_Left_Tab", "Up", "Down"]
+
+[[setting]]
+key = "claude_path"
+advanced = true
+type = "string"
+label_key = "settings.claude_path.label"
+description_key = "settings.claude_path.description"
+default = ""
+
+[[setting]]
+key = "default_cwd"
+type = "folder"
+label_key = "settings.default_cwd.label"
+description_key = "settings.default_cwd.description"
+default = "~"
+
+[[setting]]
+key = "model"
+advanced = true
+type = "select"
+label_key = "settings.model.label"
+description_key = "settings.model.description"
+default = "default"
+options = [
+  { value = "default", label_key = "settings.model.options.default" },
+  { value = "fable", label_key = "settings.model.options.fable" },
+  { value = "opus", label_key = "settings.model.options.opus" },
+  { value = "sonnet", label_key = "settings.model.options.sonnet" },
+  { value = "haiku", label_key = "settings.model.options.haiku" },
+]
+
+[[setting]]
+key = "permission_mode"
+advanced = true
+type = "select"
+label_key = "settings.permission_mode.label"
+description_key = "settings.permission_mode.description"
+default = "bypassPermissions"
+options = [
+  { value = "default", label_key = "settings.permission_mode.options.default" },
+  { value = "acceptEdits", label_key = "settings.permission_mode.options.accept_edits" },
+  { value = "plan", label_key = "settings.permission_mode.options.plan" },
+  { value = "bypassPermissions", label_key = "settings.permission_mode.options.bypass_permissions" },
+]
+
+[[setting]]
+key = "effort"
+advanced = true
+type = "select"
+label_key = "settings.effort.label"
+description_key = "settings.effort.description"
+default = "default"
+options = [
+  { value = "default", label_key = "settings.effort.options.default" },
+  { value = "low", label_key = "settings.effort.options.low" },
+  { value = "medium", label_key = "settings.effort.options.medium" },
+  { value = "high", label_key = "settings.effort.options.high" },
+  { value = "xhigh", label_key = "settings.effort.options.xhigh" },
+  { value = "max", label_key = "settings.effort.options.max" },
+]
+
+[[setting]]
+key = "load_user_config"
+advanced = true
+type = "bool"
+label_key = "settings.load_user_config.label"
+description_key = "settings.load_user_config.description"
+default = true
+
+[[setting]]
+key = "extra_prompt"
+advanced = true
+type = "string"
+label_key = "settings.extra_prompt.label"
+description_key = "settings.extra_prompt.description"
+default = ""
+
+[[setting]]
+key = "notify_on_permission"
+type = "bool"
+label_key = "settings.notify_on_permission.label"
+description_key = "settings.notify_on_permission.description"
+default = true
+
+[[setting]]
+key = "notify_on_completion"
+type = "bool"
+label_key = "settings.notify_on_completion.label"
+description_key = "settings.notify_on_completion.description"
+default = true
+
+[[setting]]
+key = "send_on_enter"
+type = "bool"
+label_key = "settings.send_on_enter.label"
+description_key = "settings.send_on_enter.description"
+default = false
+
+[[setting]]
+key = "suggestion_next"
+type = "select"
+label_key = "settings.suggestion_next.label"
+description_key = "settings.suggestion_next.description"
+default = "down"
+options = [
+  { value = "down", label_key = "settings.suggestion_key.down" },
+  { value = "up", label_key = "settings.suggestion_key.up" },
+  { value = "tab", label_key = "settings.suggestion_key.tab" },
+  { value = "shift_tab", label_key = "settings.suggestion_key.shift_tab" },
+]
+
+[[setting]]
+key = "suggestion_previous"
+type = "select"
+label_key = "settings.suggestion_previous.label"
+description_key = "settings.suggestion_previous.description"
+default = "up"
+options = [
+  { value = "down", label_key = "settings.suggestion_key.down" },
+  { value = "up", label_key = "settings.suggestion_key.up" },
+  { value = "tab", label_key = "settings.suggestion_key.tab" },
+  { value = "shift_tab", label_key = "settings.suggestion_key.shift_tab" },
+]
+
+[[setting]]
+key = "suggestion_accept"
+type = "select"
+label_key = "settings.suggestion_accept.label"
+description_key = "settings.suggestion_accept.description"
+default = "tab"
+options = [
+  { value = "tab", label_key = "settings.suggestion_key.tab" },
+  { value = "enter", label_key = "settings.suggestion_key.enter" },
+  { value = "shift_tab", label_key = "settings.suggestion_key.shift_tab" },
+]
+
+[[setting]]
+key = "python_path"
+advanced = true
+type = "string"
+label_key = "settings.python_path.label"
+description_key = "settings.python_path.description"
+default = ""
